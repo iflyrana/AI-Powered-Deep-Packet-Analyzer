@@ -1,0 +1,7 @@
+influxdb-client
+scapy
+pandas
+numpy
+matplotlib
+seaborn
+xgboost

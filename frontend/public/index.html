@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Packet Analyzer Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.1/dist/css/adminlte.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="scripts/fetch-data.js"></script>
+    <style>
+        .packet-box {
+            text-align: center;
+            font-size: 1.5rem;
+            padding: 20px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .normal-box {
+            background-color: #28a745;
+            color: white;
+        }
+        .anomaly-box {
+            background-color: #dc3545;
+            color: white;
+        }
+        .chart-container {
+            width: 80%;
+            max-width: 400px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+    <div class="content-wrapper">
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <!-- Normal Packets Box -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body packet-box normal-box">
+                                Normal Packets: <span id="normalCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Anomalous Packets Box -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body packet-box anomaly-box">
+                                Anomalous Packets: <span id="anomalyCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Doughnut Chart -->
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Packet Distribution</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="packetChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- File Upload Section -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Upload PCAP File</h3>
+                            </div>
+                            <div class="card-body text-center">
+                                <input type="file" id="pcapFile" class="form-control mb-3">
+                                <button class="btn btn-primary" onclick="uploadPcap()">Upload</button>
+                                <p id="uploadStatus"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    let ctx = document.getElementById('packetChart').getContext('2d');
+    let normalAnomalyChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Normal Packets', 'Anomalous Packets'],
+            datasets: [{
+                data: [0, 0],
+                backgroundColor: ['#28a745', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    function uploadPcap() {
+        let fileInput = document.getElementById("pcapFile");
+        let file = fileInput.files[0];
+
+        if (!file) {
+            document.getElementById("uploadStatus").innerText = "Please select a file.";
+            return;
+        }
+
+        let formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/upload", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            document.getElementById("uploadStatus").innerText = result.message;
+        })
+        .catch(error => {
+            document.getElementById("uploadStatus").innerText = "Upload failed!";
+            console.error("Error:", error);
+        });
+    }
+
+    setInterval(fetchPacketData, 5000);
+    fetchPacketData(); // Initial call
+</script>
+
+</body>
+</html>
